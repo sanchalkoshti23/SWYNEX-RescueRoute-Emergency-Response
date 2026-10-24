@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#24374e">
+    <meta name="description" content="RescueRoute emergency response operations dashboard">
+    <title>RescueRoute | Operations</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="stylesheet" href="/style.css?v=20261024-9">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
+    <script src="/app.js?v=20261024-9" defer></script>
+</head>
+<body>
+    <div class="app-shell" id="app-shell">
+        <aside class="sidebar" id="sidebar" aria-label="Main navigation">
+            <div class="sidebar-brand-row">
+                <a class="brand" href="#overview" data-view-link="overview" aria-label="RescueRoute overview">
+                    <span class="brand-mark" aria-hidden="true">
+                        <svg viewBox="0 0 32 32"><path d="M16 3.5 27 8v7.5c0 6.5-4.6 11-11 13-6.4-2-11-6.5-11-13V8z"></path><path d="M16 9v14M9 16h14"></path></svg>
+                    </span>
+                    <span class="brand-name">Rescue<span>Route</span></span>
+                </a>
+                <button class="sidebar-toggle" id="sidebar-toggle" type="button" aria-label="Collapse sidebar" title="Collapse sidebar">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6"></path></svg>
+                </button>
+            </div>
+
+            <div class="sidebar-caption">OPERATIONS</div>
+            <nav class="nav-list" aria-label="Workspace">
+                <button class="nav-link active" type="button" data-view="overview" aria-current="page" title="Overview">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-6v-7h-4v7H4a1 1 0 0 1-1-1z"></path></svg><span class="nav-label">Overview</span>
+                </button>
+                <button class="nav-link" type="button" data-view="emergencies" title="Emergencies">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path><circle cx="12" cy="12" r="9"></circle></svg><span class="nav-label">Emergencies</span><span class="nav-count" id="nav-emergency-count">0</span>
+                </button>
+                <button class="nav-link" type="button" data-view="units" title="Emergency Units">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 16v-5l2-3h9l4 4h3v4M5 16h.01M17 16h.01M5 8V6h7v2"></path></svg><span class="nav-label">Emergency Units</span>
+                </button>
+                <button class="nav-link" type="button" data-view="dispatch" title="Dispatch Center">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"></path><path d="M4 5v14"></path></svg><span class="nav-label">Dispatch Center</span><span class="nav-count nav-count-alert" id="nav-dispatch-count">0</span>
+                </button>
+                <button class="nav-link" type="button" data-view="reports" title="Reports">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5M4 19h17M8 15v-4M13 15V7M18 15V9"></path></svg><span class="nav-label">Reports</span>
+                </button>
+            </nav>
+
+            <div class="sidebar-spacer"></div>
+            <div class="sidebar-service">
+                <span class="service-indicator" aria-hidden="true"></span>
+                <div class="service-copy"><strong id="sidebar-connection-title">Connecting to API</strong><small id="sidebar-connection-detail">Checking service health</small></div>
+                <span class="service-menu" aria-hidden="true">···</span>
+            </div>
+            <div class="sidebar-profile">
+                <span class="profile-avatar" aria-hidden="true">RR</span>
+                <span class="profile-copy"><strong>RescueRoute</strong><small>Response team</small></span>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg>
+            </div>
+        </aside>
+        <button class="sidebar-backdrop" id="sidebar-backdrop" type="button" aria-label="Close navigation" hidden></button>
+
+        <main class="main-content">
+            <header class="topbar">
+                <div class="header-leading">
+                    <button class="mobile-menu" id="mobile-menu" type="button" aria-label="Open navigation" aria-expanded="false">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
+                    </button>
+                    <div class="page-heading">
+                        <p class="eyebrow">RESCUEROUTE <span>/</span> OPERATIONS</p>
+                        <h1 id="page-title">Overview</h1>
+                    </div>
+                </div>
+                <div class="header-tools">
+                    <label class="global-search">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"></circle><path d="m16 16 5 5"></path></svg>
+                        <span class="sr-only">Search incidents</span>
+                        <input id="global-search" type="search" placeholder="Search incidents" autocomplete="off">
+                        <kbd>/</kbd>
+                    </label>
+                    <button class="header-icon-button notification-button" id="notification-button" type="button" aria-label="View unresolved emergencies">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"></path></svg>
+                        <span class="notification-dot" id="notification-dot" hidden></span>
+                    </button>
+                    <div class="header-status" id="header-status"><span class="service-indicator" aria-hidden="true"></span><span id="connection-label">Connecting…</span></div>
+                    <button class="button button-secondary refresh-button" id="refresh-button" type="button">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"></path><path d="M5.5 9a7 7 0 0 1 11.8-2L20 12M4 12l2.7 5a7 7 0 0 0 11.8-2"></path></svg><span>Refresh</span>
+                    </button>
+                </div>
+            </header>
+
+            <div class="page-content">
+                <div class="toast-region" id="global-notice" role="status" aria-live="polite" hidden></div>
+
+                <section class="view-section active" data-section="overview" id="section-overview">
+                    <div class="welcome-banner">
+                        <div class="welcome-copy">
+                            <span class="banner-overline"><span class="banner-live-dot"></span> RESPONSE NETWORK ONLINE</span>
+                            <h2>Good day, operations team</h2>
+                            <p>Your current incident and fleet overview, all in one place.</p>
+                            <button class="button button-banner" type="button" data-open-report>
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg> Report an emergency
+                            </button>
+                        </div>
+                        <div class="banner-art" aria-hidden="true">
+                            <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
+                            <div class="radar-ring radar-ring-one"></div><div class="radar-ring radar-ring-two"></div>
+                            <div class="radar-ring radar-ring-three"></div>
+                            <span class="radar-center"><svg viewBox="0 0 32 32"><path d="M16 3.5 27 8v7.5c0 6.5-4.6 11-11 13-6.4-2-11-6.5-11-13V8z"></path><path d="M16 9v14M9 16h14"></path></svg></span>
+                            <span class="radar-point radar-point-one"></span><span class="radar-point radar-point-two"></span><span class="radar-point radar-point-three"></span>
+                        </div>
+                    </div>
+
+                    <div class="section-title-row kpi-heading">
+                        <div><p class="section-kicker">LIVE SNAPSHOT</p><h2>Operations at a glance</h2></div>
+                        <span class="updated-label"><span class="service-indicator"></span> Live backend data</span>
+                    </div>
+                    <section class="stats-grid" aria-label="Emergency statistics">
+                        <article class="stat-card stat-red">
+                            <div class="stat-card-top"><span class="stat-label">Total Emergencies</span><span class="stat-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path><circle cx="12" cy="12" r="9"></circle></svg></span></div>
+                            <strong class="stat-value" id="stat-total">--</strong><span class="stat-foot">Incidents recorded</span>
+                            <span class="stat-accent"></span>
+                        </article>
+                        <article class="stat-card stat-orange">
+                            <div class="stat-card-top"><span class="stat-label">Unresolved Emergencies</span><span class="stat-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8v5M12 17h.01"></path><circle cx="12" cy="12" r="9"></circle></svg></span></div>
+                            <strong class="stat-value" id="stat-unresolved">--</strong><span class="stat-foot">Reported or in progress</span>
+                            <span class="stat-accent"></span>
+                        </article>
+                        <article class="stat-card stat-green">
+                            <div class="stat-card-top"><span class="stat-label">Available Units</span><span class="stat-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 12 4 4 8-8"></path></svg></span></div>
+                            <strong class="stat-value" id="stat-available">--</strong><span class="stat-foot">Ready for deployment</span>
+                            <span class="stat-accent"></span>
+                        </article>
+                        <article class="stat-card stat-blue">
+                            <div class="stat-card-top"><span class="stat-label">Dispatched Units</span><span class="stat-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"></path></svg></span></div>
+                            <strong class="stat-value" id="stat-dispatched">--</strong><span class="stat-foot">Currently responding</span>
+                            <span class="stat-accent"></span>
+                        </article>
+                    </section>
+
+                    <div class="map-workspace">
+                        <section class="surface-card map-card" aria-label="Operations map">
+                            <div class="map-heading">
+                                <div><p class="section-kicker">GEOGRAPHIC OPERATIONS</p><h2>Operations map</h2></div>
+                                <span class="map-live-tag"><span class="map-live-dot"></span> SIMULATION MAP</span>
+                            </div>
+                            <div class="map-frame">
+                                <div id="operations-map" role="application" aria-label="Interactive Maharashtra operations map with OpenStreetMap tiles and zoom controls"></div>
+                                <div class="map-pick-banner" id="map-pick-banner" role="status" hidden>
+                                    <span>Choose a supported Maharashtra location by clicking the map.</span>
+                                    <button class="button button-secondary button-small" id="cancel-location-pick" type="button">Cancel selection</button>
+                                </div>
+                                <div class="map-empty-notice" id="map-empty-notice" role="status">
+                                    <span class="map-empty-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="2.5"></circle></svg></span>
+                                    <span><strong>Maharashtra Operations Map — awaiting emergency location data.</strong><small>Emergency pins and demo vehicle positions appear only from explicit simulation/API data.</small></span>
+                                </div>
+                                <div class="map-load-error" id="map-load-error" role="status" hidden></div>
+                            </div>
+                            <div class="map-footer">
+                                <span id="map-status">Waiting for map service…</span>
+                                <span class="map-provider">Leaflet via CDN · Tiles © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a></span>
+                            </div>
+                        </section>
+                        <div class="operations-rail">
+                            <section class="surface-card overview-emergency-details" aria-labelledby="overview-details-title">
+                                <div class="surface-heading">
+                                    <div><p class="section-kicker">SELECTED INCIDENT</p><h2 id="overview-details-title">Emergency details</h2></div>
+                                    <span id="overview-details-status"></span>
+                                </div>
+                                <div class="overview-details-content" id="overview-details-content">
+                                    <p class="list-state compact-state" id="overview-details-state">Select an incident to view its response details.</p>
+                                </div>
+                                <div class="overview-details-actions" id="overview-details-actions"></div>
+                            </section>
+                            <section class="surface-card overview-queue">
+                                <div class="surface-heading">
+                                    <div><p class="section-kicker">INCIDENTS</p><h2>Response queue <span class="count-pill" id="overview-emergency-count">--</span></h2></div>
+                                    <button class="text-button" type="button" data-view="emergencies">View all <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"></path></svg></button>
+                                </div>
+                                <div class="compact-list" id="overview-incidents-list"></div>
+                                <div class="list-state compact-state" id="overview-state" role="status" aria-live="polite">Loading incident data…</div>
+                            </section>
+                            <section class="surface-card fleet-summary">
+                                <div class="surface-heading">
+                                    <div><p class="section-kicker">FLEET AVAILABILITY</p><h2>Unit readiness</h2></div>
+                                    <button class="icon-link" type="button" data-view="units" aria-label="View emergency units"><svg viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"></path></svg></button>
+                                </div>
+                                <div class="fleet-summary-total"><strong id="fleet-ready-count">--</strong><span>of <b id="fleet-total-count">--</b> units available</span></div>
+                                <div class="fleet-meter"><span id="fleet-meter-fill"></span></div>
+                                <div class="fleet-type-list" id="fleet-type-summary"></div>
+                                <div class="list-state compact-state" id="fleet-state" role="status" aria-live="polite">Loading unit data…</div>
+                            </section>
+                        </div>
+                    </div>
+
+                    <div class="data-note"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 8h.01"></path></svg><span>Emergency pins use reported coordinates. Fleet positions are deterministic DEMONSTRATION coordinates, not GPS tracking. Road routes use OSRM when available; fallback routes are clearly labeled as simulated.</span></div>
+                </section>
+
+                <section class="view-section" data-section="emergencies" id="section-emergencies" hidden>
+                    <div class="view-intro">
+                        <div><p class="section-kicker">INCIDENT MANAGEMENT</p><h2>Emergency operations</h2><p>Review, search, and manage reported incidents.</p></div>
+                        <button class="button button-primary" type="button" data-open-report><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg> Report emergency</button>
+                    </div>
+                    <div class="emergency-kpis">
+                        <div class="mini-kpi"><span class="mini-kpi-icon mini-kpi-red"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg></span><span><small>Total incidents</small><strong id="emergency-total-mini">--</strong></span></div>
+                        <div class="mini-kpi"><span class="mini-kpi-icon mini-kpi-orange"><svg viewBox="0 0 24 24"><path d="M12 8v5M12 17h.01"></path><circle cx="12" cy="12" r="9"></circle></svg></span><span><small>Needs response</small><strong id="emergency-open-mini">--</strong></span></div>
+                        <div class="mini-kpi"><span class="mini-kpi-icon mini-kpi-blue"><svg viewBox="0 0 24 24"><path d="M4 12h15M13 6l6 6-6 6"></path></svg></span><span><small>Dispatched</small><strong id="emergency-dispatched-mini">--</strong></span></div>
+                    </div>
+                    <section class="surface-card table-card">
+                        <div class="table-toolbar">
+                            <div><h3>Incident register</h3><span class="table-subtitle"><span id="emergency-count">--</span> records shown</span></div>
+                            <div class="table-controls">
+                                <label class="table-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"></circle><path d="m16 16 5 5"></path></svg><span class="sr-only">Search emergencies</span><input id="emergency-search" type="search" placeholder="Search ID, type, location…"></label>
+                                <label class="select-control"><span class="sr-only">Filter by status</span><select id="emergency-status-filter"><option value="">All statuses</option><option value="REPORTED">Reported</option><option value="DISPATCHED">Dispatched</option><option value="ARRIVED">Arrived</option><option value="RESOLVED">Resolved</option></select><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"></path></svg></label>
+                                <label class="select-control"><span class="sr-only">Filter by emergency type</span><select id="emergency-category-filter"><option value="">All types</option><option value="MEDICAL">Medical</option><option value="FIRE">Fire</option><option value="SECURITY">Security</option></select><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"></path></svg></label>
+                            </div>
+                        </div>
+                        <div class="list-state" id="emergency-state" role="status" aria-live="polite">Loading emergencies…</div>
+                        <div class="table-scroll" id="emergency-table-wrap" hidden>
+                            <table class="data-table">
+                                <thead><tr><th scope="col">Incident</th><th scope="col">Location &amp; description</th><th scope="col">Status</th><th scope="col" class="actions-column">Actions</th></tr></thead>
+                                <tbody id="emergency-list"></tbody>
+                            </table>
+                        </div>
+                    </section>
+                </section>
+
+                <section class="view-section" data-section="units" id="section-units" hidden>
+                    <div class="view-intro">
+                        <div><p class="section-kicker">FLEET MANAGEMENT</p><h2>Emergency units</h2><p>Live readiness across your response fleet.</p></div>
+                        <div class="fleet-live-tag"><span class="service-indicator"></span> Live availability</div>
+                    </div>
+                    <div class="unit-overview-strip">
+                        <div><span class="strip-icon strip-blue"><svg viewBox="0 0 24 24"><path d="M3 16v-5l2-3h9l4 4h3v4M5 16h.01M17 16h.01"></path></svg></span><span><small>Fleet size</small><strong id="units-total">--</strong></span></div>
+                        <div><span class="strip-icon strip-green"><svg viewBox="0 0 24 24"><path d="m6 12 4 4 8-8"></path></svg></span><span><small>Available now</small><strong id="units-available">--</strong></span></div>
+                        <div><span class="strip-icon strip-slate"><svg viewBox="0 0 24 24"><path d="M4 12h15M13 6l6 6-6 6"></path></svg></span><span><small>Unavailable</small><strong id="units-unavailable">--</strong></span></div>
+                    </div>
+                    <div class="unit-grid" id="unit-list"></div>
+                    <div class="list-state" id="unit-state" role="status" aria-live="polite">Loading emergency units…</div>
+                    <div class="data-note"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 8h.01"></path></svg><span>Fleet markers use deterministic, configurable demonstration start positions. They are simulation state, not live GPS positions.</span></div>
+                </section>
+
+                <section class="view-section" data-section="dispatch" id="section-dispatch" hidden>
+                    <div class="view-intro">
+                        <div><p class="section-kicker">COORDINATION</p><h2>Dispatch center</h2><p>Match reported incidents with the available response fleet.</p></div>
+                        <button class="button button-secondary" type="button" data-view="units"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 16v-5l2-3h9l4 4h3v4M5 16h.01M17 16h.01"></path></svg> Fleet status</button>
+                    </div>
+                    <div class="dispatch-overview">
+                        <div class="dispatch-callout"><span class="dispatch-callout-icon"><svg viewBox="0 0 24 24"><path d="M12 8v5M12 17h.01"></path><circle cx="12" cy="12" r="9"></circle></svg></span><div><strong id="dispatch-pending-count">--</strong><span>reported incidents awaiting dispatch</span></div></div>
+                        <div class="dispatch-callout dispatch-callout-calm"><span class="dispatch-callout-icon"><svg viewBox="0 0 24 24"><path d="m6 12 4 4 8-8"></path></svg></span><div><strong id="dispatch-ready-count">--</strong><span>units currently available</span></div></div>
+                    </div>
+                    <section class="surface-card dispatch-card">
+                        <div class="surface-heading"><div><p class="section-kicker">RESPONSE SIMULATOR</p><h2>Active dispatches &amp; reported incidents</h2></div><span class="dispatch-explainer">Closest compatible available vehicle · accelerated demo movement</span></div>
+                        <div class="list-state" id="dispatch-state" role="status" aria-live="polite">Loading dispatch queue…</div>
+                        <div class="dispatch-list" id="dispatch-list"></div>
+                    </section>
+                </section>
+
+                <section class="view-section" data-section="reports" id="section-reports" hidden>
+                    <div class="view-intro">
+                        <div><p class="section-kicker">OPERATIONAL REPORTING</p><h2>Reports &amp; insights</h2><p>A current-state summary derived from available RescueRoute API data.</p></div>
+                        <span class="report-live-label"><span class="service-indicator"></span> Current snapshot</span>
+                    </div>
+                    <div class="report-summary-grid">
+                        <article class="report-summary-card"><span class="report-summary-icon summary-blue"><svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h17M8 15v-4M13 15V7M18 15V9"></path></svg></span><span class="report-summary-label">Total incidents</span><strong id="report-total">--</strong><small>Current records</small></article>
+                        <article class="report-summary-card"><span class="report-summary-icon summary-orange"><svg viewBox="0 0 24 24"><path d="M12 8v5M12 17h.01"></path><circle cx="12" cy="12" r="9"></circle></svg></span><span class="report-summary-label">Unresolved</span><strong id="report-unresolved">--</strong><small>Reported or dispatched</small></article>
+                        <article class="report-summary-card"><span class="report-summary-icon summary-green"><svg viewBox="0 0 24 24"><path d="m6 12 4 4 8-8"></path></svg></span><span class="report-summary-label">Available fleet</span><strong id="report-available">--</strong><small>Units ready to respond</small></article>
+                    </div>
+                    <div class="reports-grid">
+                        <section class="surface-card breakdown-card">
+                            <div class="surface-heading"><div><p class="section-kicker">INCIDENT MIX</p><h2>Current status breakdown</h2></div></div>
+                            <div class="breakdown-list" id="status-breakdown"></div>
+                        </section>
+                        <section class="surface-card breakdown-card">
+                            <div class="surface-heading"><div><p class="section-kicker">RESOURCE MIX</p><h2>Fleet composition</h2></div></div>
+                            <div class="breakdown-list" id="category-breakdown"></div>
+                        </section>
+                    </div>
+                    <div class="analytics-notice"><span class="analytics-notice-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 8h.01"></path></svg></span><div><strong>Current-state reporting only</strong><p>The backend provides current incident and unit records, but no timestamps or historical snapshots. Trend charts, response-time analytics, and geographic maps would require additional API data, so they are not fabricated here.</p></div></div>
+                </section>
+
+                <footer class="page-footer"><span>RescueRoute Emergency Response</span><span>Operational data from the live API</span></footer>
+            </div>
+        </main>
+    </div>
+
+    <dialog class="report-dialog" id="report-dialog" aria-labelledby="report-dialog-title">
+        <form class="report-form" id="report-form">
+            <div class="dialog-heading">
+                <span class="dialog-mark"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></span>
+                <div><p class="section-kicker">INCIDENT INTAKE</p><h2 id="report-dialog-title">Report an emergency</h2><p class="dialog-subtitle">Submit accurate details for the response team.</p></div>
+                <button class="icon-button" id="close-report-form" type="button" aria-label="Close report form"><svg viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"></path></svg></button>
+            </div>
+            <div class="form-grid">
+                <label>Emergency type<select name="category" required><option value="">Select type</option><option value="ACCIDENT">Accident</option><option value="FIRE">Fire</option><option value="MEDICAL">Medical</option><option value="SECURITY">Security</option></select></label>
+                <div class="form-field form-wide">
+                    <label for="report-location">Incident location</label>
+                    <div class="location-picker-row">
+                        <input id="report-location" name="location" type="text" maxlength="160" placeholder="Choose a point on the Maharashtra map" readonly required>
+                        <button class="button button-secondary" id="pick-location" type="button">Select on map</button>
+                    </div>
+                    <span class="field-hint" id="selected-coordinate">No map location selected.</span>
+                    <input name="latitude" type="hidden">
+                    <input name="longitude" type="hidden">
+                </div>
+                <label class="form-wide">Situation details <span class="optional-label">Optional</span><textarea name="description" rows="4" maxlength="500" placeholder="Describe what happened and any immediate risks"></textarea><span class="field-hint">Do not include sensitive personal information.</span></label>
+            </div>
+            <p class="form-message" id="form-message" role="status" aria-live="polite"></p>
+            <div class="form-actions"><button class="button button-secondary" id="cancel-report" type="button">Cancel</button><button class="button button-primary" id="submit-report" type="submit"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"></path></svg> Submit report</button></div>
+        </form>
+    </dialog>
+
+    <dialog class="detail-dialog" id="emergency-dialog" aria-labelledby="dialog-title">
+        <div class="dialog-heading">
+            <span class="dialog-mark dialog-mark-blue"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4zM8 9h8M8 13h8M8 17h4"></path></svg></span>
+            <div><p class="section-kicker">INCIDENT RECORD</p><h2 id="dialog-title">Emergency details</h2></div>
+            <button class="icon-button" id="close-dialog" type="button" aria-label="Close details"><svg viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"></path></svg></button>
+        </div>
+        <div class="detail-content" id="dialog-content"></div>
+    </dialog>
+</body>
+</html>
